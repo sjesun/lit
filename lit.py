@@ -5,9 +5,16 @@ from hashlib import sha1
 
 
 """
+construct_path(sha1):
+    Given sha1 hash of a git object, returns the file path to that object
+"""
+def construct_path(sha_hash):
+    return f".git/objects/{sha_hash[:2]}/{sha_hash[2:]}"
+
+
+"""
 compute_hash(filename): 
-    Given filename, returns its hash and all its contents for processing by 
-    'git hash-object'
+    Given filename, returns its hash and all its contents for processing
 """
 def compute_hash(filename):
     with open(filename, "rb") as f:
@@ -34,9 +41,7 @@ def main():
     
         if sys.argv[2] == "-p":
             # git cat-file -p: pretty-print
-            sha_hash = sys.argv[3]
-            subdirectory, filename = sha_hash[:2], sha_hash[2:]
-            obj = f".git/objects/{subdirectory}/{filename}"
+            obj = construct_path(sys.argv[3])
             with open(obj, "rb") as f:
                 rawdata = zlib.decompress(f.read())
                 
@@ -63,9 +68,8 @@ def main():
             
             # preparing data for writing
             compressed_data = zlib.compress(data)
-            subdirectory, file = obj_id[:2], obj_id[2:]
-            os.makedirs(f".git/objects/{subdirectory}", exist_ok=True)
-            path = f".git/objects/{subdirectory}/{file}"
+            os.makedirs(f".git/objects/{obj_id[:2]}", exist_ok=True)
+            path = construct_path(obj_id)
             with open(path, "wb") as f:
                 f.write(compressed_data)
         
