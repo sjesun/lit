@@ -48,7 +48,7 @@ def main():
                 # removing header and leading and trailing whitespaces
                 rawcontents = rawdata.split(b"\x00")[1].strip()
                 
-                orig = rawcontents.decode()
+                orig = rawcontents.decode("utf-8")
                 print(orig, end="")
         
         else:
@@ -75,7 +75,58 @@ def main():
         
         # object ID is printed either way
         print(obj_id)
-    
+        
+    # git ls-tree
+    elif git_command == "ls-tree":
+        
+        if len(sys.argv) == 3:
+            # no flags provided
+            is_name_only = False
+            tree_hash = sys.argv[2]
+        
+        elif len(sys.argv) == 4 and sys.argv[2] == "--name-only":
+            # git ls-tree --name-only
+            is_name_only = True
+            tree_hash = sys.argv[3]
+        
+        # reading and decompressing tree
+        tree_path = construct_path(tree_hash)
+        with open(tree_path, "rb") as f:
+            data = f.read()
+        rawdata = zlib.decompress(data)
+        
+        # parsing tree
+        tree_info = rawdata.split(b"\x00", maxsplit=1)[1]
+        tree_contents = []
+        while tree_info:
+            
+            # retrieving mode, filename, and SHA-1 hash
+            modename, tree_info = tree_info.split(b"\x00", maxsplit=1)
+            mode, name = modename.split()
+            name = name.decode("utf-8")
+            if is_name_only:
+                # printing only the filename
+                print(name)
+            
+            else: 
+                mode = mode.decode("utf-8").zfill(6)
+                sha_hash = tree_info[:20].hex()
+                
+                # preserving each record as a tuple
+                tree_contents.append((mode, name, sha_hash))
+            
+            tree_info = tree_info[20:]
+        
+        if not is_name_only:
+            for mode, name, sha_hash in tree_contents:
+                if mode == "040000":
+                    object_type = "tree"
+                else:
+                    object_type = "blob"
+                tree_contains = f"{mode} {object_type} {sha_hash}\t{name}"
+                print(tree_contains)    
+
+            
     # unknown or unimplemented command
     else:
         raise RuntimeError(f"Unknown or unimplemented command #{git_command}")
