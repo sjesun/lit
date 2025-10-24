@@ -69,9 +69,10 @@ def main():
             # preparing data for writing
             compressed_data = zlib.compress(data)
             os.makedirs(f".git/objects/{obj_id[:2]}", exist_ok=True)
-            path = construct_path(obj_id)
-            with open(path, "wb") as f:
-                f.write(compressed_data)
+            path_to_file = construct_path(obj_id)
+            if not os.path.exists(path_to_file):
+                with open(path_to_file, "wb") as f:
+                    f.write(compressed_data)
         
         # object ID is printed either way
         print(obj_id)
