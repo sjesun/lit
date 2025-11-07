@@ -5,10 +5,10 @@ from hashlib import sha1
 
 
 """
-construct_path(sha1):
+form_path(sha1):
     Given sha1 hash of a git object, returns the file path to that object
 """
-def construct_path(sha_hash):
+def form_path(sha_hash):
     return f".git/objects/{sha_hash[:2]}/{sha_hash[2:]}"
 
 
@@ -41,7 +41,7 @@ def main():
     
         if sys.argv[2] == "-p":
             # git cat-file -p: pretty-print
-            obj = construct_path(sys.argv[3])
+            obj = form_path(sys.argv[3])
             with open(obj, "rb") as f:
                 rawdata = zlib.decompress(f.read())
                 
@@ -69,7 +69,7 @@ def main():
             # preparing data for writing
             compressed_data = zlib.compress(data)
             os.makedirs(f".git/objects/{obj_id[:2]}", exist_ok=True)
-            path_to_file = construct_path(obj_id)
+            path_to_file = form_path(obj_id)
             if not os.path.exists(path_to_file):
                 with open(path_to_file, "wb") as f:
                     f.write(compressed_data)
@@ -91,7 +91,7 @@ def main():
             tree_hash = sys.argv[3]
         
         # reading and decompressing tree
-        tree_path = construct_path(tree_hash)
+        tree_path = form_path(tree_hash)
         with open(tree_path, "rb") as f:
             data = f.read()
         rawdata = zlib.decompress(data)
